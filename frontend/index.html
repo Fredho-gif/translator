@@ -2,6 +2,15 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
+  <link href="https://fonts.googleapis.com/css2?family=Inter..." rel="stylesheet">
+    <!-- TipTap (éditeur riche) via CDN -->
+  <script type="module">
+  import { Editor } from 'https://esm.sh/@tiptap/core@2';
+  import StarterKit from 'https://esm.sh/@tiptap/starter-kit@2';
+
+  // On expose TipTap globalement pour pouvoir l'utiliser plus tard
+  window.TipTap = { Editor, StarterKit };
+</script>
   <title>pdf_translator_pro — Éditeur</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
