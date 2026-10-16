@@ -37,25 +37,15 @@
       </ul>
     </aside>
 
-    <main class="editor">
+   <main class="editor">
   <div class="editor-inner">
     <h1 id="chapter-title">Sélectionne un chapitre</h1>
     <div class="meta" id="chapter-meta">
       Choisis un chapitre à gauche pour commencer à lire ou écrire.
     </div>
 
-    <!-- Zone d'affichage actuelle (lecture) -->
-    <div id="chapter-content" class="content placeholder">
-      Aucun chapitre ouvert.
-    </div>
-
-    <!-- Éditeur TipTap -->
-    <div style="margin-top: 40px; padding-top: 24px; border-top: 1px solid #e8e3d9;">
-      <h2 style="font-family: 'Inter', sans-serif; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #8a847c; margin-bottom: 16px;">
-        Éditeur (TipTap)
-      </h2>
-      <div id="tiptap-editor" style="border: 1px solid #e8e3d9; border-radius: 10px; padding: 20px; min-height: 200px; background: #fff; font-family: 'Lora', serif; font-size: 18px; line-height: 1.7;"></div>
-    </div>
+    <!-- Éditeur TipTap (zone principale) -->
+    <div id="tiptap-editor" style="border: 1px solid #e8e3d9; border-radius: 10px; padding: 20px; min-height: 400px; background: #fff; font-family: 'Lora', serif; font-size: 18px; line-height: 1.7;"></div>
   </div>
 </main>
   </div>
@@ -84,26 +74,29 @@
       }
     }
 
-    function showChapter(ch, li) {
+          function showChapter(ch, li) {
       document.querySelectorAll('#chapter-list li')
         .forEach(el => el.classList.remove('active'));
       li.classList.add('active');
 
-      const titleEl = document.getElementById('chapter-title');
-      const contentEl = document.getElementById('chapter-content');
+      document.getElementById('chapter-title').textContent = ch.title;
+      document.getElementById('chapter-meta').textContent =
+        `Chapitre ${ch.id} · ${ch.content.split(' ').length} mots`;
 
-      titleEl.textContent = ch.title;
-      contentEl.textContent = ch.content;
-      contentEl.classList.remove('placeholder');
+      if (editor) {
+        editor.commands.setContent(`<p>${ch.content}</p>`);
+      }
     }
-    // ---- Éditeur TipTap ----
+       // ---- Éditeur TipTap ----
+    let editor = null;
+
     document.addEventListener('DOMContentLoaded', () => {
       const { Editor, StarterKit } = window.TipTap;
 
-      new Editor({
+      editor = new Editor({
         element: document.getElementById('tiptap-editor'),
         extensions: [StarterKit],
-        content: '<p>Commence à écrire ici…</p>',
+        content: '',
       });
     });
     loadChapters();
