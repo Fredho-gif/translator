@@ -42,7 +42,10 @@
     <h1 id="chapter-title">Sélectionne un chapitre</h1>
     <div class="meta" id="chapter-meta">
       Choisis un chapitre à gauche pour commencer à lire ou écrire.
-    </div>
+    </div>    <button id="btn-save" style="margin-bottom: 20px; padding: 10px 20px; background: #8a6d3b; color: white; border: none; border-radius: 6px; cursor: pointer;">
+      💾 Enregistrer
+    </button>
+
 
     <!-- Éditeur TipTap (zone principale) -->
     <div id="tiptap-editor" style="border: 1px solid #e8e3d9; border-radius: 10px; padding: 20px; min-height: 400px; background: #fff; font-family: 'Lora', serif; font-size: 18px; line-height: 1.7;"></div>
@@ -98,6 +101,35 @@
         extensions: [StarterKit],
         content: '',
       });
+    });
+        // ---- Bouton Enregistrer ----
+    document.getElementById('btn-save').addEventListener('click', async () => {
+      if (!editor) return;
+      
+      const title = document.getElementById('chapter-title').textContent;
+      // On cherche l'ID du chapitre actif
+      const activeLi = document.querySelector('#chapter-list li.active');
+      if (!activeLi) return alert('Ouvre un chapitre d abord !');
+      
+      const id = activeLi.dataset.id;
+      const content = editor.getHTML();
+
+      try {
+        const res = await fetch(`/chapters/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: content })
+        });
+        
+        if (res.ok) {
+          alert('✅ Chapitre sauvegardé !');
+        } else {
+          alert('❌ Erreur de sauvegarde');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('❌ Erreur réseau');
+      }
     });
     loadChapters();
   </script>

@@ -121,7 +121,19 @@ def list_chapters():
 
 # Accessible sur : /app/
 app.mount("/app", StaticFiles(directory="frontend", html=True), name="frontend")
+from pydantic import BaseModel
 
+class ChapterUpdate(BaseModel):
+    content: str
+
+@app.put("/chapters/{chapter_id}")
+def update_chapter(chapter_id: int, payload: ChapterUpdate):
+    for ch in fake_chapters:
+        if ch["id"] == chapter_id:
+            ch["content"] = payload.content
+            return {"status": "ok", "chapter": ch}
+    return {"status": "error", "message": "Chapitre introuvable"}
+    
 # 4. Point d'entrée : quand tu tapes `python api.py`, ça lance le serveur.
 if __name__ == "__main__":
     uvicorn.run("api:app", host="127.0.0.1", port=8000, reload=True)
