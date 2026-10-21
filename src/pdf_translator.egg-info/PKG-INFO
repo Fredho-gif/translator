@@ -1,0 +1,11 @@
+Metadata-Version: 2.4
+Name: pdf-translator
+Version: 3.1.0
+Summary: Traduction de PDF (texte, tableaux, images, mise en forme) avec conservation de la structure d'origine
+Requires-Python: >=3.9
+Requires-Dist: pdfplumber
+Requires-Dist: pymupdf
+Requires-Dist: deep-translator
+Requires-Dist: reportlab
+Requires-Dist: pillow
+Requires-Dist: pytesseract

@@ -1,0 +1,6 @@
+pdfplumber
+pymupdf
+deep-translator
+reportlab
+pillow
+pytesseract

@@ -4,32 +4,19 @@ pipeline.py — Orchestre le processus complet : extraction -> traduction
 depuis un script CLI, une interface web, ou un futur SaaS.
 """
 
-import re
 import tempfile
 from pathlib import Path
 
 import fitz  # PyMuPDF
 import pdfplumber
 
+from .core.errors import OutputError, PdfNotFoundError
+from .core.languages import valider_langues
 from .extraction import extraire_contenu_page
 from .extraction.headers_footers import detecter_entetes_pieds
 from .formatting import detecter_taille_corps_habituelle
 from .generation import generer_pdf
 from .translation import appliquer_traductions, collecter_textes_uniques, traduire_en_parallele
-
-
-def _valider_code_langue(code: str, nom: str) -> str:
-    """Valide et normalise un code de langue ISO pour les services de traduction."""
-    if not isinstance(code, str):
-        raise ValueError(f"Le code de langue {nom} doit être une chaîne de caractères.")
-
-    code_normalise = code.strip().lower()
-    if not code_normalise or not re.fullmatch(r"[a-z]{2,5}", code_normalise):
-        raise ValueError(
-            f"Le code de langue {nom} est invalide : '{code}'. "
-            "Utilise un code ISO comme 'fr', 'en', 'es' ou 'pt-br'."
-        )
-    return code_normalise
 
 
 def translate_pdf(chemin_entree: str, chemin_sortie=None,
@@ -50,17 +37,14 @@ def translate_pdf(chemin_entree: str, chemin_sortie=None,
     on_log : fonction appelée avec chaque message de progression (par
     défaut `print` ; peut être remplacée pour rediriger vers une UI web).
     """
-    source = _valider_code_langue(source, "source")
-    cible = _valider_code_langue(cible, "cible")
-    if source == cible:
-        raise ValueError("La langue source et la langue cible doivent être différentes.")
+    source, cible = valider_langues(source, cible)
 
     chemin_entree = Path(chemin_entree)
     if not chemin_entree.exists():
-        raise FileNotFoundError(f"Fichier introuvable : {chemin_entree}")
+        raise PdfNotFoundError(f"Fichier introuvable : {chemin_entree}")
 
     if chemin_sortie is None:
-        chemin_sortie = str(chemin_entree.with_name(chemin_entree.stem + "_fr.pdf"))
+        chemin_sortie = str(chemin_entree.with_name(f"{chemin_entree.stem}_{cible}.pdf"))
     elif not str(chemin_sortie).lower().endswith(".pdf"):
         chemin_sortie = str(chemin_sortie) + ".pdf"
 
@@ -121,10 +105,10 @@ def _verifier_resultat(chemin_sortie: str, on_log) -> str:
     jamais retourner un faux succès silencieux."""
     chemin_final = Path(chemin_sortie)
     if not chemin_final.exists():
-        raise RuntimeError(f"Le fichier de sortie n'a pas été créé : {chemin_final}")
+        raise OutputError(f"Le fichier de sortie n'a pas été créé : {chemin_final}")
     taille_ko = chemin_final.stat().st_size / 1024
     if taille_ko < 1:
-        raise RuntimeError(f"Le fichier généré est vide ou corrompu : {chemin_final}")
+        raise OutputError(f"Le fichier généré est vide ou corrompu : {chemin_final}")
 
     on_log(f"Terminé. Fichier généré : {chemin_final.resolve()} ({taille_ko:.0f} Ko)")
     return str(chemin_final.resolve())
