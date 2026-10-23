@@ -19,6 +19,7 @@ from deep_translator import GoogleTranslator, MyMemoryTranslator
 from .providers.deepl import traduire_deepl
 
 from ..config import TAILLE_MAX_BLOC_TRADUCTION, TENTATIVES_TRADUCTION
+from ..settings import settings
 
 # Statistiques globales (incréments simples, thread-safe grâce au GIL) sur
 # quel service a traduit chaque texte — utilisées pour informer/avertir
@@ -69,7 +70,7 @@ def traduire_un_texte(texte: str, source: str, cible: str,
     if not texte or not texte.strip():
         return texte or ""
 
-    cle_deepl = cle_deepl or os.environ.get("DEEPL_API_KEY")
+    cle_deepl = cle_deepl or settings.deepl_api_key
 
     blocs = decouper_en_blocs(texte)
     resultats = []
