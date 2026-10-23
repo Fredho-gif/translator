@@ -8,11 +8,9 @@ Utilisation simple :
     translate_pdf("document.pdf", "document_fr.pdf", source="en", cible="fr")
 """
 
-from .config import appliquer_timeout_reseau
+
 from .pipeline import translate_pdf
 
-# Appliqué une seule fois à l'import du package : voir config.py pour le détail.
-appliquer_timeout_reseau()
 
 __version__ = "3.1.0"
 __all__ = ["translate_pdf", "__version__"]
