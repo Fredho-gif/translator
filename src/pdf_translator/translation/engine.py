@@ -14,7 +14,9 @@ Un blocage ponctuel d'un service ne bloque donc jamais toute la traduction.
 import os
 import time
 
-from deep_translator import DeeplTranslator, GoogleTranslator, MyMemoryTranslator
+from deep_translator import GoogleTranslator, MyMemoryTranslator
+
+from .providers.deepl import traduire_deepl
 
 from ..config import TAILLE_MAX_BLOC_TRADUCTION, TENTATIVES_TRADUCTION
 
@@ -48,24 +50,10 @@ def decouper_en_blocs(texte: str, taille_max: int = TAILLE_MAX_BLOC_TRADUCTION) 
     return blocs
 
 
-def _cle_deepl_est_gratuite(cle: str) -> bool:
-    """Les clés DeepL gratuites se terminent par ':fx' — elles utilisent une
-    URL d'API différente des clés payantes (Pro)."""
-    return cle.strip().endswith(":fx")
-
 
 def _traduire_avec_deepl(bloc: str, source: str, cible: str, cle_deepl: str):
-    """Tente une traduction via DeepL. Retourne None en cas d'échec (clé
-    invalide, quota dépassé, réseau indisponible...)."""
-    try:
-        traducteur = DeeplTranslator(
-            source=source, target=cible,
-            api_key=cle_deepl.strip(),
-            use_free_api=_cle_deepl_est_gratuite(cle_deepl),
-        )
-        return traducteur.translate(bloc)
-    except Exception:
-        return None
+    """Tente une traduction via DeepL (appel direct à l'API)."""
+    return traduire_deepl(bloc, source, cible, cle_deepl)
 
 
 def traduire_un_texte(texte: str, source: str, cible: str,
