@@ -2,34 +2,25 @@
 engine.py — Moteur de traduction d'un texte unique.
 
 Ordre de priorité :
-  1. DeepL — si une clé API est fournie. Nettement meilleur pour préserver
-     le sens et le contexte plutôt que de traduire mot à mot.
-  2. Google Translate — utilisé si DeepL est absent, en échec, ou en
-     quota dépassé.
-  3. MyMemory — dernier recours si les deux précédents échouent.
+  1. DeepL — si une clé API est fournie (appel direct à l'API).
+  2. Google Translate — si DeepL est absent, en échec ou en quota dépassé.
+  3. MyMemory — dernier recours.
 
 Un blocage ponctuel d'un service ne bloque donc jamais toute la traduction.
+Chaque traduction compte ses résultats dans son propre TranslationReport.
 """
 
-import os
+import logging
 import time
 
 from deep_translator import GoogleTranslator, MyMemoryTranslator
 
+from ..config import TAILLE_MAX_BLOC_TRADUCTION, TENTATIVES_TRADUCTION
+from ..core.report import TranslationReport
+from ..settings import settings
 from .providers.deepl import traduire_deepl
 
-from ..config import TAILLE_MAX_BLOC_TRADUCTION, TENTATIVES_TRADUCTION
-from ..settings import settings
-
-# Statistiques globales (incréments simples, thread-safe grâce au GIL) sur
-# quel service a traduit chaque texte — utilisées pour informer/avertir
-# clairement l'utilisateur à la fin.
-STATS_TRADUCTION = {"deepl": 0, "google": 0, "secours": 0, "echecs_complets": 0}
-
-
-def reinitialiser_stats():
-    for cle in STATS_TRADUCTION:
-        STATS_TRADUCTION[cle] = 0
+logger = logging.getLogger(__name__)
 
 
 def decouper_en_blocs(texte: str, taille_max: int = TAILLE_MAX_BLOC_TRADUCTION) -> list:
@@ -51,64 +42,60 @@ def decouper_en_blocs(texte: str, taille_max: int = TAILLE_MAX_BLOC_TRADUCTION) 
     return blocs
 
 
-
-def _traduire_avec_deepl(bloc: str, source: str, cible: str, cle_deepl: str):
-    """Tente une traduction via DeepL (appel direct à l'API)."""
-    return traduire_deepl(bloc, source, cible, cle_deepl)
-
-
 def traduire_un_texte(texte: str, source: str, cible: str,
                        tentatives: int = TENTATIVES_TRADUCTION,
-                       cle_deepl: str = None) -> str:
+                       cle_deepl: str = None,
+                       rapport: TranslationReport = None) -> str:
     """
     Traduit un texte (avec découpage si trop long).
 
-    cle_deepl : clé API DeepL. Si absente, on utilise automatiquement la
-    variable d'environnement DEEPL_API_KEY (voir plus bas) ; sinon, on
+    cle_deepl : clé API DeepL ; sinon celle des réglages (.env) ; sinon on
     passe directement à Google Translate.
+    rapport : compte quel service a traduit chaque bloc (un par traduction).
     """
     if not texte or not texte.strip():
         return texte or ""
 
+    rapport = rapport if rapport is not None else TranslationReport()
     cle_deepl = cle_deepl or settings.deepl_api_key
 
-    blocs = decouper_en_blocs(texte)
     resultats = []
-
-    for bloc in blocs:
+    for bloc in decouper_en_blocs(texte):
         traduit = None
 
-        # 1) DeepL (meilleure qualité contextuelle), si une clé est configurée
+        # 1) DeepL
         if cle_deepl:
-            traduit = _traduire_avec_deepl(bloc, source, cible, cle_deepl)
+            traduit = traduire_deepl(bloc, source, cible, cle_deepl)
             if traduit:
-                STATS_TRADUCTION["deepl"] += 1
+                rapport.ajouter("deepl")
 
-        # 2) Google Translate si DeepL est absent ou a échoué
+        # 2) Google Translate
         if not traduit:
             traducteur_google = GoogleTranslator(source=source, target=cible)
             for essai in range(1, tentatives + 1):
                 try:
                     traduit = traducteur_google.translate(bloc)
                     if traduit:
-                        STATS_TRADUCTION["google"] += 1
+                        rapport.ajouter("google")
                         break
-                except Exception:
+                except Exception as e:
+                    logger.warning("Google : %s (essai %d/%d)",
+                                   type(e).__name__, essai, tentatives)
                     if essai < tentatives:
                         time.sleep(0.5 * essai)
 
-        # 3) MyMemory en dernier recours
+        # 3) MyMemory
         if not traduit:
             try:
-                traducteur_secours = MyMemoryTranslator(source=source, target=cible)
-                traduit = traducteur_secours.translate(bloc)
+                traduit = MyMemoryTranslator(source=source, target=cible).translate(bloc)
                 if traduit:
-                    STATS_TRADUCTION["secours"] += 1
-            except Exception:
+                    rapport.ajouter("secours")
+            except Exception as e:
+                logger.warning("MyMemory : %s", type(e).__name__)
                 traduit = None
 
         if not traduit:
-            STATS_TRADUCTION["echecs_complets"] += 1
+            rapport.ajouter("echecs")
             traduit = bloc  # dernier recours : on garde le texte original
 
         resultats.append(traduit)

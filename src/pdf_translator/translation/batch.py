@@ -5,10 +5,14 @@ batch.py — Orchestration de la traduction pour un document entier :
   3. appliquer_traductions     : remet les traductions à leur place dans les blocs
 """
 
+import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from ..config import TENTATIVES_TRADUCTION, TRADUCTIONS_PARALLELES
-from .engine import STATS_TRADUCTION, reinitialiser_stats, traduire_un_texte
+from ..core.report import TranslationReport
+from .engine import traduire_un_texte
+
+logger = logging.getLogger(__name__)
 
 
 def collecter_textes_uniques(pages_blocs: list) -> set:
@@ -31,33 +35,37 @@ def collecter_textes_uniques(pages_blocs: list) -> set:
 def traduire_en_parallele(textes_uniques: set, source: str, cible: str,
                            max_workers: int = TRADUCTIONS_PARALLELES,
                            cle_deepl: str = None,
-                           on_progress=None) -> dict:
+                           on_progress=None,
+                           rapport: TranslationReport = None) -> dict:
     """
     Traduit un ensemble de textes uniques en parallèle.
 
     cle_deepl : clé API DeepL (prioritaire sur Google/MyMemory si fournie).
     on_progress : callback optionnel appelé (termines, total) après chaque
-    texte traduit — pratique pour brancher une barre de progression dans
-    une interface web sans dupliquer la logique.
+    texte traduit — pratique pour une barre de progression dans une UI web.
+    rapport : TranslationReport propre à cette traduction (créé si absent).
     """
     cache = {}
     total = len(textes_uniques)
     if total == 0:
         return cache
 
-    reinitialiser_stats()
+    rapport = rapport if rapport is not None else TranslationReport()
 
     termines = 0
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = {
-            executor.submit(traduire_un_texte, texte, source, cible, TENTATIVES_TRADUCTION, cle_deepl): texte
+            executor.submit(traduire_un_texte, texte, source, cible,
+                            TENTATIVES_TRADUCTION, cle_deepl, rapport): texte
             for texte in textes_uniques
         }
         for future in as_completed(futures):
             texte_original = futures[future]
             try:
                 cache[texte_original] = future.result()
-            except Exception:
+            except Exception as e:
+                logger.warning("Échec inattendu de traduction : %s", type(e).__name__)
+                rapport.ajouter("echecs")
                 cache[texte_original] = texte_original
             termines += 1
             if on_progress:
@@ -65,29 +73,24 @@ def traduire_en_parallele(textes_uniques: set, source: str, cible: str,
             elif termines % 10 == 0 or termines == total:
                 print(f"  [traduction] {termines}/{total} textes uniques traités")
 
-    _avertir_si_echecs(total)
+    _afficher_rapport(rapport, total)
     return cache
 
 
-def _avertir_si_echecs(total: int):
-    """Informe/avertit clairement sur la façon dont les textes ont été
-    traduits, plutôt que de terminer silencieusement "avec succès"."""
-    deepl = STATS_TRADUCTION["deepl"]
-    google = STATS_TRADUCTION["google"]
-    secours = STATS_TRADUCTION["secours"]
-    echecs = STATS_TRADUCTION["echecs_complets"]
-
-    if deepl:
-        print(f"  ✅ {deepl} texte(s) traduits via DeepL (qualité contextuelle)")
-    if google:
-        print(f"  ℹ️  {google} texte(s) traduits via Google Translate "
-              f"{'(DeepL indisponible pour ceux-là)' if deepl else ''}")
-    if secours:
-        print(f"  ℹ️  {secours} texte(s) ont utilisé le service de traduction de secours (MyMemory)")
-    if echecs:
-        pourcentage = 100 * echecs / total
-        print(f"  ⚠️  ATTENTION : {echecs}/{total} texte(s) ({pourcentage:.0f}%) n'ont PAS pu être "
-              f"traduits (tous les services ont échoué) — "
+def _afficher_rapport(rapport: TranslationReport, total: int):
+    """Informe clairement sur la façon dont les textes ont été traduits,
+    plutôt que de terminer silencieusement "avec succès"."""
+    if rapport.deepl:
+        print(f"  ✅ {rapport.deepl} texte(s) traduits via DeepL (qualité contextuelle)")
+    if rapport.google:
+        print(f"  ℹ️  {rapport.google} texte(s) traduits via Google Translate "
+              f"{'(DeepL indisponible pour ceux-là)' if rapport.deepl else ''}")
+    if rapport.secours:
+        print(f"  ℹ️  {rapport.secours} texte(s) ont utilisé le service de secours (MyMemory)")
+    if rapport.echecs:
+        pourcentage = 100 * rapport.echecs / total
+        print(f"  ⚠️  ATTENTION : {rapport.echecs}/{total} texte(s) ({pourcentage:.0f}%) n'ont PAS pu "
+              f"être traduits (tous les services ont échoué) — "
               f"ils resteront dans la langue d'origine dans le PDF final.")
         if pourcentage > 30:
             print("  ⚠️  Ce taux d'échec élevé indique probablement un blocage réseau vers les "
