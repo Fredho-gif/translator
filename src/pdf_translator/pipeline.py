@@ -10,6 +10,7 @@ from pathlib import Path
 import fitz  # PyMuPDF
 import pdfplumber
 
+from .core.blocks import bloc_vers_dict
 from .core.errors import OutputError, PdfNotFoundError
 from .core.languages import valider_langues
 from .extraction import extraire_contenu_page
@@ -30,9 +31,8 @@ def translate_pdf(chemin_entree: str, chemin_sortie=None,
     affiché en légende.
 
     cle_deepl : clé API DeepL (recommandé pour une traduction plus fidèle
-    au sens et au contexte plutôt que mot à mot). Si absente, on utilise
-    automatiquement la variable d'environnement DEEPL_API_KEY si elle
-    existe ; sinon Google Translate (+ secours MyMemory) est utilisé.
+    au sens et au contexte plutôt que mot à mot). Si absente, la clé du
+    fichier .env est utilisée ; sinon Google Translate (+ secours MyMemory).
 
     on_log : fonction appelée avec chaque message de progression (par
     défaut `print` ; peut être remplacée pour rediriger vers une UI web).
@@ -71,6 +71,9 @@ def translate_pdf(chemin_entree: str, chemin_sortie=None,
             for num_page, page_plumber in enumerate(pdf.pages):
                 blocs = extraire_contenu_page(page_plumber, doc_fitz, num_page, dossier_tmp,
                                                entetes_pieds, taille_corps, source)
+                # Temporaire : on repasse en dictionnaires le temps de migrer
+                # la traduction et la génération vers les classes.
+                blocs = [bloc_vers_dict(b) for b in blocs]
                 _log_progression_extraction(on_log, num_page, nb_pages, blocs)
                 pages_blocs.append(blocs)
 
