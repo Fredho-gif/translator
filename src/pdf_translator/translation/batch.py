@@ -123,3 +123,4 @@ def appliquer_traductions(pages_blocs: list, cache: dict) -> list:
             elif bloc["type"] == "image" and bloc.get("texte_ocr", "").strip():
                 bloc["texte_ocr_traduit"] = cache.get(bloc["texte_ocr"], bloc["texte_ocr"])
     return pages_blocs
+    
