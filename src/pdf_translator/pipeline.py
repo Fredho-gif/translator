@@ -10,7 +10,7 @@ from pathlib import Path
 import fitz  # PyMuPDF
 import pdfplumber
 
-from .core.blocks import bloc_vers_dict
+from .core.blocks import ImageBlock, StyleLigne, TableBlock, TextBlock
 from .core.errors import OutputError, PdfNotFoundError
 from .core.languages import valider_langues
 from .extraction import extraire_contenu_page
@@ -71,9 +71,6 @@ def translate_pdf(chemin_entree: str, chemin_sortie=None,
             for num_page, page_plumber in enumerate(pdf.pages):
                 blocs = extraire_contenu_page(page_plumber, doc_fitz, num_page, dossier_tmp,
                                                entetes_pieds, taille_corps, source)
-                # Temporaire : on repasse en dictionnaires le temps de migrer
-                # la traduction et la génération vers les classes.
-                blocs = [bloc_vers_dict(b) for b in blocs]
                 _log_progression_extraction(on_log, num_page, nb_pages, blocs)
                 pages_blocs.append(blocs)
 
@@ -91,14 +88,15 @@ def translate_pdf(chemin_entree: str, chemin_sortie=None,
 
 
 def _log_progression_extraction(on_log, num_page: int, nb_pages: int, blocs: list):
-    nb_tableaux = sum(1 for b in blocs if b["type"] == "table")
-    nb_images = sum(1 for b in blocs if b["type"] == "image")
-    nb_images_avec_texte = sum(
-        1 for b in blocs if b["type"] == "image" and b.get("texte_ocr", "").strip()
+    nb_tableaux = sum(1 for b in blocs if isinstance(b, TableBlock))
+    images = [b for b in blocs if isinstance(b, ImageBlock)]
+    nb_images_avec_texte = sum(1 for b in images if b.texte_ocr.strip())
+    nb_titres = sum(
+        1 for b in blocs
+        if isinstance(b, TextBlock) and b.style in (StyleLigne.TITRE1, StyleLigne.TITRE2)
     )
-    nb_titres = sum(1 for b in blocs if b.get("style") in ("titre1", "titre2"))
     on_log(f"  [extraction] page {num_page + 1}/{nb_pages} "
-           f"-> {len(blocs)} bloc(s) ({nb_tableaux} tableau(x), {nb_images} image(s) "
+           f"-> {len(blocs)} bloc(s) ({nb_tableaux} tableau(x), {len(images)} image(s) "
            f"dont {nb_images_avec_texte} avec texte détecté, "
            f"{nb_titres} titre(s)/sous-titre(s))")
 
