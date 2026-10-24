@@ -4,3 +4,5 @@ __pycache__/
 .env
 *.pdf
 fichiers.txt
+img_test.png
+*.egg-info/

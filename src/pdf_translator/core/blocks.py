@@ -1,5 +1,5 @@
 """blocks.py — Les blocs de contenu extraits d'un PDF (texte, tableau, image)."""
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from enum import Enum
 from typing import ClassVar
 
@@ -20,6 +20,14 @@ class Block:
     top: float
     bottom: float
 
+    def textes_a_traduire(self) -> set:
+        """Les textes de ce bloc qu'il faut envoyer au traducteur."""
+        return set()
+
+    def appliquer(self, cache: dict) -> "Block":
+        """Retourne un NOUVEAU bloc avec les traductions du cache appliquées."""
+        return self
+
 
 @dataclass
 class TextBlock(Block):
@@ -27,11 +35,27 @@ class TextBlock(Block):
     content: str = ""
     style: StyleLigne = StyleLigne.NORMAL
 
+    def textes_a_traduire(self) -> set:
+        return {self.content} if self.content.strip() else set()
+
+    def appliquer(self, cache: dict) -> "TextBlock":
+        return replace(self, content=cache.get(self.content, self.content))
+
 
 @dataclass
 class TableBlock(Block):
     type: ClassVar[str] = "table"
     content: list = field(default_factory=list)  # liste de lignes, chaque ligne = liste de cellules
+
+    def textes_a_traduire(self) -> set:
+        return {str(c) for ligne in self.content for c in ligne if c and str(c).strip()}
+
+    def appliquer(self, cache: dict) -> "TableBlock":
+        nouvelle_table = [
+            [cache.get(str(c), str(c)) if c and str(c).strip() else (c or "") for c in ligne]
+            for ligne in self.content
+        ]
+        return replace(self, content=nouvelle_table)
 
 
 @dataclass
@@ -40,6 +64,14 @@ class ImageBlock(Block):
     content: str = ""            # chemin du fichier image
     texte_ocr: str = ""
     texte_ocr_traduit: str = ""
+
+    def textes_a_traduire(self) -> set:
+        return {self.texte_ocr} if self.texte_ocr.strip() else set()
+
+    def appliquer(self, cache: dict) -> "ImageBlock":
+        if not self.texte_ocr.strip():
+            return self
+        return replace(self, texte_ocr_traduit=cache.get(self.texte_ocr, self.texte_ocr))
 
 
 def bloc_depuis_dict(d: dict) -> Block:
