@@ -82,7 +82,7 @@ def translate_pdf(chemin_entree: str, chemin_sortie=None,
         on_log(f"  {len(textes_uniques)} texte(s) unique(s) à traduire "
                f"(doublons ignorés pour gagner du temps)")
         cache = traduire_en_parallele(textes_uniques, source, cible, cle_deepl=cle_deepl)
-        appliquer_traductions(pages_blocs, cache)
+        pages_blocs = appliquer_traductions(pages_blocs, cache)
 
         on_log(f"[3/3] Génération du PDF final : {chemin_sortie}")
         generer_pdf(pages_blocs, chemin_sortie, taille_page=taille_page)

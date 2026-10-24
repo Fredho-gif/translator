@@ -7,6 +7,7 @@ src/pdf_translator/config.py
 src/pdf_translator/formatting.py
 src/pdf_translator/ocr.py
 src/pdf_translator/pipeline.py
+src/pdf_translator/settings.py
 src/pdf_translator.egg-info/PKG-INFO
 src/pdf_translator.egg-info/SOURCES.txt
 src/pdf_translator.egg-info/dependency_links.txt
@@ -14,8 +15,10 @@ src/pdf_translator.egg-info/entry_points.txt
 src/pdf_translator.egg-info/requires.txt
 src/pdf_translator.egg-info/top_level.txt
 src/pdf_translator/core/__init__.py
+src/pdf_translator/core/blocks.py
 src/pdf_translator/core/errors.py
 src/pdf_translator/core/languages.py
+src/pdf_translator/core/report.py
 src/pdf_translator/extraction/__init__.py
 src/pdf_translator/extraction/headers_footers.py
 src/pdf_translator/extraction/images.py
@@ -29,4 +32,9 @@ src/pdf_translator/generation/styles.py
 src/pdf_translator/translation/__init__.py
 src/pdf_translator/translation/batch.py
 src/pdf_translator/translation/engine.py
+src/pdf_translator/translation/providers/__init__.py
+src/pdf_translator/translation/providers/deepl.py
+src/pdf_translator/translation/providers/google.py
+src/pdf_translator/translation/providers/mymemory.py
+tests/test_blocks.py
 tests/test_project_quality.py

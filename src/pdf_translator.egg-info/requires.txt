@@ -4,3 +4,8 @@ deep-translator
 reportlab
 pillow
 pytesseract
+requests
+pydantic-settings
+
+[dev]
+pytest

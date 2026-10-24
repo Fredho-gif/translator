@@ -9,3 +9,7 @@ Requires-Dist: deep-translator
 Requires-Dist: reportlab
 Requires-Dist: pillow
 Requires-Dist: pytesseract
+Requires-Dist: requests
+Requires-Dist: pydantic-settings
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
