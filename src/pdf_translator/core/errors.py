@@ -17,3 +17,6 @@ class PdfNotFoundError(PdfTranslatorError, FileNotFoundError):
 
 class OutputError(PdfTranslatorError, RuntimeError):
     """Le PDF généré est absent ou vide."""
+    
+class TranslationFailedError(PdfTranslatorError, RuntimeError):
+    """Aucun texte n'a pu être traduit (tous les services ont échoué)."""

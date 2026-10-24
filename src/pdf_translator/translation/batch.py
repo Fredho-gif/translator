@@ -9,6 +9,7 @@ import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from ..config import TENTATIVES_TRADUCTION, TRADUCTIONS_PARALLELES
+from ..core.errors import TranslationFailedError
 from ..core.report import TranslationReport
 from .engine import traduire_un_texte
 
@@ -73,7 +74,12 @@ def traduire_en_parallele(textes_uniques: set, source: str, cible: str,
             elif termines % 10 == 0 or termines == total:
                 print(f"  [traduction] {termines}/{total} textes uniques traités")
 
-    _afficher_rapport(rapport, total)
+        _afficher_rapport(rapport, total)
+    if rapport.echecs >= total:
+        raise TranslationFailedError(
+            "Aucun texte n'a pu être traduit : tous les services ont échoué. "
+            "Vérifie ta clé DeepL (.env) et ta connexion."
+        )
     return cache
 
 
