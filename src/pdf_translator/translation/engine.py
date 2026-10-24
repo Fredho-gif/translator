@@ -1,26 +1,19 @@
 """
-engine.py — Moteur de traduction d'un texte unique.
+engine.py — Traduit un texte unique en essayant les fournisseurs dans l'ordre :
+  1. DeepL (si une clé est configurée)
+  2. Google Translate
+  3. MyMemory (secours)
 
-Ordre de priorité :
-  1. DeepL — si une clé API est fournie (appel direct à l'API).
-  2. Google Translate — si DeepL est absent, en échec ou en quota dépassé.
-  3. MyMemory — dernier recours.
-
-Un blocage ponctuel d'un service ne bloque donc jamais toute la traduction.
-Chaque traduction compte ses résultats dans son propre TranslationReport.
+Chaque fournisseur vit dans son propre fichier (providers/). Chaque
+traduction compte ses résultats dans son propre TranslationReport.
 """
-
-import logging
-import time
-
-from deep_translator import GoogleTranslator, MyMemoryTranslator
 
 from ..config import TAILLE_MAX_BLOC_TRADUCTION, TENTATIVES_TRADUCTION
 from ..core.report import TranslationReport
 from ..settings import settings
 from .providers.deepl import traduire_deepl
-
-logger = logging.getLogger(__name__)
+from .providers.google import traduire_google
+from .providers.mymemory import traduire_mymemory
 
 
 def decouper_en_blocs(texte: str, taille_max: int = TAILLE_MAX_BLOC_TRADUCTION) -> list:
@@ -59,45 +52,24 @@ def traduire_un_texte(texte: str, source: str, cible: str,
     rapport = rapport if rapport is not None else TranslationReport()
     cle_deepl = cle_deepl or settings.deepl_api_key
 
+    # Chaque étape : (nom dans le rapport, fonction de traduction)
+    fournisseurs = []
+    if cle_deepl:
+        fournisseurs.append(("deepl", lambda b: traduire_deepl(b, source, cible, cle_deepl)))
+    fournisseurs.append(("google", lambda b: traduire_google(b, source, cible, tentatives)))
+    fournisseurs.append(("secours", lambda b: traduire_mymemory(b, source, cible)))
+
     resultats = []
     for bloc in decouper_en_blocs(texte):
         traduit = None
-
-        # 1) DeepL
-        if cle_deepl:
-            traduit = traduire_deepl(bloc, source, cible, cle_deepl)
+        for nom, traduire in fournisseurs:
+            traduit = traduire(bloc)
             if traduit:
-                rapport.ajouter("deepl")
-
-        # 2) Google Translate
-        if not traduit:
-            traducteur_google = GoogleTranslator(source=source, target=cible)
-            for essai in range(1, tentatives + 1):
-                try:
-                    traduit = traducteur_google.translate(bloc)
-                    if traduit:
-                        rapport.ajouter("google")
-                        break
-                except Exception as e:
-                    logger.warning("Google : %s (essai %d/%d)",
-                                   type(e).__name__, essai, tentatives)
-                    if essai < tentatives:
-                        time.sleep(0.5 * essai)
-
-        # 3) MyMemory
-        if not traduit:
-            try:
-                traduit = MyMemoryTranslator(source=source, target=cible).translate(bloc)
-                if traduit:
-                    rapport.ajouter("secours")
-            except Exception as e:
-                logger.warning("MyMemory : %s", type(e).__name__)
-                traduit = None
-
+                rapport.ajouter(nom)
+                break
         if not traduit:
             rapport.ajouter("echecs")
             traduit = bloc  # dernier recours : on garde le texte original
-
         resultats.append(traduit)
 
     return " ".join(resultats)
