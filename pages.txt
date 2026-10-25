@@ -1,0 +1,55 @@
+warning: The `fitz` API is deprecated and will be removed in future. Use `import pymupdf` instead.
+5 pages, corps ≈ 14pt, 0 en-tête(s)/pied(s) exclu(s)
+
+=== Page 1 ===
+[texte normal  ] y=   74   269 car.  '7. LA MAÎTRISE DE SOI est le “contrepoids” par lequel vous pouvez contrôler votre enth
+[texte normal  ] y=  150   401 car.  '8. L’HABITUDE DE FAIRE PLUS QUE CE POUR LEQUEL ON EST PAYÉ est l’une des plus important
+[texte normal  ] y=  259   464 car.  '9. UNE PERSONNALITÉ MAGNÉTIQUE est le pivot sur lequel vous devez concentrer vos efforts p
+[texte normal  ] y=  386   438 car.  '10. LA PENSÉE CLAIRE est l’une des bases importantes de tout succès permanent. Cette le�
+[texte normal  ] y=  496   496 car.  '11. LA CONCENTRATION vous enseignera comment fixer votre attention sur un seul objectif à l
+[texte normal  ] y=  622   472 car.  '12. LA COOPÉRATION vous enseignera la valeur du travail en équipe dans tout ce que vous en
+
+=== Page 2 ===
+[texte normal  ] y=   74   107 car.  'Vous découvrirez également comment utiliser ce que les autres ont appris sur le travail qu
+[texte normal  ] y=  117   231 car.  '13. L’ÉCHEC vous apprendra comment tirer profit de toutes vos erreurs et de tous vos éch
+[texte normal  ] y=  177   701 car.  '14. LA TOLÉRANCE va vous enseigner comment éviter les conséquences désastreuses des pré
+[texte normal  ] y=  336   547 car.  '15. LA RÈGLE D’OR vous apprendra comment vous servir de cette grande loi universelle de c
+[texte titre2  ] y=  482   111 car.  'Si vous devez calomnier quelqu’un, ne le dites pas, mais écrivez-le, écrivez-le sur le s
+[texte titre2  ] y=  572    13 car.  'Napoleon Hill'
+[texte normal  ] y=  602   205 car.  'Quand vous aurez maîtrisé ces Lois – il faut en principe 15 à 30 semaines pour y parven
+[texte titre1  ] y=  680    39 car.  'Quel est le but de ces Lois du Succès ?'
+
+=== Page 3 ===
+[texte normal  ] y=   74   196 car.  'Le but de ces Lois est de développer ou de vous aider à organiser toutes les connaissances
+[texte normal  ] y=  133   342 car.  'Si vous ne l’avez pas encore fait, lorsque vous étudiez ce cours sur les Lois du Succès,
+[texte normal  ] y=  226   181 car.  'Vous devriez aussi commencer à enseigner ces lois à ceux que vous aimez le plus, car c’e
+[texte normal  ] y=  287   237 car.  'Si vous avez des enfants, vous pouvez fixer ces Lois du Succès dans leur esprit de façon �
+[texte titre1  ] y=  381    36 car.  'Le Pouvoir : Comment le développer ?'
+[texte normal  ] y=  414    66 car.  'Le POUVOIR est l’un des 3 principaux objectifs de l’effort humain.'
+[texte normal  ] y=  440   166 car.  'Il y a 2 sortes de POUVOIR : l’un se développe par la coordination des lois physiques nat
+[texte normal  ] y=  500   225 car.  'Le POUVOIR issu des connaissances organisées est le plus important car il nous offre un out
+[texte normal  ] y=  560   174 car.  'L’objectif de ce cours est de vous montrer la route par laquelle vous pouvez passer en tou
+[texte normal  ] y=  620    76 car.  'Nous pouvons acquérir des connaissances grâce à ces 2 méthodes principales :'
+[texte normal  ] y=  663    90 car.  '– l’étude, la classification et l’assimilation des faits organisés par d’autres pe
+
+=== Page 4 ===
+[texte normal  ] y=   74   117 car.  '– notre propre processus de collecte, d’organisation et de classification des faits, app
+[texte normal  ] y=  117   140 car.  'Cette leçon traite essentiellement des méthodes et moyens d’étudier les faits et les do
+[texte titre1  ] y=  178    57 car.  'Une des connaissances très utiles découvertes par l’homme'
+[texte normal  ] y=  235   191 car.  'L’état de progrès comme la “civilisation” n’est rien d’autre que la mesure des c
+[texte normal  ] y=  295   165 car.  'Parmi les connaissances utiles organisées par l’homme, il a découvert et catalogué 117 
+[texte normal  ] y=  354   258 car.  'Par l’étude, l’analyse et les mesures exactes, l’homme a découvert la “grandeur”
+[texte normal  ] y=  431   348 car.  'De l’autre côté, l’homme a découvert la “petitesse” des éléments qui constituen
+[texte titre1  ] y=  541    42 car.  'Les molécules, les atomes et les électrons'
+[texte normal  ] y=  575   356 car.  'Pour comprendre à la fois les détails et la perspective du processus d’acquisition, d’
+[texte normal  ] y=  668   224 car.  'Les molécules sont formées d’atomes qui sont des petites particules invisibles de matiè
+
+=== Page 5 ===
+[texte normal  ] y=   74   350 car.  'Ces atomes, qui tournent continuellement dans la molécule, sont formés d’électrons. Nou
+[texte normal  ] y=  167   232 car.  'Comme c’est merveilleux ! Comme c’est magnifique ! Vous rendez-vous compte que chaque al
+[texte normal  ] y=  243   278 car.  'Dans le monde de la matière physique, si l’on observe la plus grande étoile au ciel ou l
+[texte normal  ] y=  320   398 car.  'Chaque particule est en mouvement continu. Rien n’est immobile, même si presque toute la 
+[texte titre2  ] y=  433   156 car.  'N’ayez pas peur des obstacles. Rappelez-vous que le “CERF-\nVOLANT” du succès s’él
+[texte normal  ] y=  560   303 car.  'Les 117 éléments sont différents les uns des autres car ils sont formées de combinaisons
+[texte normal  ] y=  637   199 car.  'Grâce à la chimie, nous savons qu’une matière peut être décomposée en atomes qui son
+[texte normal  ] y=  696    78 car.  'Nous allons illustrer l’opération chimique à travers laquelle ce changement de'

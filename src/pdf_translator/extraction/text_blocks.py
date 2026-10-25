@@ -45,6 +45,11 @@ def _ecart_median(lignes: list) -> float:
 def _finit_une_phrase(texte: str) -> bool:
     return texte.rstrip().endswith(_FINS_DE_PHRASE)
 
+def _finit_par_cesure(texte: str) -> bool:
+    """True si la ligne finit par un trait d'union collé à une lettre ('CERF-', 'exam-')."""
+    t = texte.rstrip()
+    return len(t) >= 2 and t.endswith("-") and t[-2].isalpha()
+
 
 def extraire_paragraphes(page_plumber, zones_exclues: list, entetes_pieds: set = None,
                           taille_corps: float = 11.0) -> list:
@@ -173,7 +178,9 @@ def extraire_paragraphes(page_plumber, zones_exclues: list, entetes_pieds: set =
             para_segments.append((texte_ligne, largeur_ligne))
         else:
             texte_prec, largeur_prec = para_segments[-1]
-            if ligne_est_une_rupture(texte_prec, largeur_prec):
+            if _finit_par_cesure(texte_prec):
+                para_segments.append((texte_ligne, largeur_ligne))
+            elif ligne_est_une_rupture(texte_prec, largeur_prec):
                 para_segments.append(("\n" + texte_ligne, largeur_ligne))
             else:
                 para_segments.append((" " + texte_ligne, largeur_ligne))
