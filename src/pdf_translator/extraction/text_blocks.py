@@ -3,6 +3,7 @@ text_blocks.py — Extraction des paragraphes de texte (hors tableaux).
 
 Regroupe les lignes en paragraphes selon :
   - l'espacement vertical (un grand espace = nouveau paragraphe)
+  - le retrait de la première ligne (retrait + fin de phrase avant)
   - la mise en forme (un changement titre <-> non-titre = nouveau bloc)
   - la "forme" de la ligne : une ligne courte ou qui se termine par un
     montant/nombre est traitée comme une rupture volontaire (sous-titre,
@@ -11,10 +12,38 @@ Regroupe les lignes en paragraphes selon :
 """
 
 import re
+import statistics
+from collections import Counter
 
-from ..config import RATIO_ESPACEMENT_NOUVEAU_PARAGRAPHE, RATIO_LIGNE_COURTE
+from ..config import (
+    ECART_MIN_NOUVEAU_PARAGRAPHE,
+    RATIO_ECART_NOUVEAU_PARAGRAPHE,
+    RATIO_ESPACEMENT_NOUVEAU_PARAGRAPHE,
+    RATIO_LIGNE_COURTE,
+    SEUIL_RETRAIT_PARAGRAPHE,
+)
 from ..formatting import classifier_style, detecter_style_ligne
 from .headers_footers import normaliser_pour_comparaison
+
+_FINS_DE_PHRASE = (".", "!", "?", "…", "”", "»", '"', ":")
+
+
+def _marge_gauche(lignes: list) -> float:
+    """Position x0 la plus fréquente : le bord gauche du texte courant."""
+    if not lignes:
+        return 0.0
+    return float(Counter(round(l["x0"]) for l in lignes).most_common(1)[0][0])
+
+
+def _ecart_median(lignes: list) -> float:
+    """Écart vertical médian entre deux lignes consécutives (0 si indéterminé)."""
+    ecarts = [b["top"] - a["bottom"] for a, b in zip(lignes, lignes[1:])]
+    ecarts = [e for e in ecarts if e > 0]
+    return statistics.median(ecarts) if ecarts else 0.0
+
+
+def _finit_une_phrase(texte: str) -> bool:
+    return texte.rstrip().endswith(_FINS_DE_PHRASE)
 
 
 def extraire_paragraphes(page_plumber, zones_exclues: list, entetes_pieds: set = None,
@@ -59,6 +88,13 @@ def extraire_paragraphes(page_plumber, zones_exclues: list, entetes_pieds: set =
     largeur_normale = max(largeurs) if largeurs else 0
     seuil_ligne_courte = largeur_normale * RATIO_LIGNE_COURTE
 
+    marge_gauche = _marge_gauche(lignes_utiles)
+    seuil_retrait = taille_corps * SEUIL_RETRAIT_PARAGRAPHE
+    seuil_ecart = max(
+        _ecart_median(lignes_utiles) * RATIO_ECART_NOUVEAU_PARAGRAPHE,
+        ECART_MIN_NOUVEAU_PARAGRAPHE,
+    )
+
     def ligne_est_une_rupture(ligne_texte: str, largeur_ligne: float) -> bool:
         """True si la ligne semble être une fin volontaire (titre, item de
         liste, montant) plutôt qu'une ligne qui continue automatiquement."""
@@ -78,6 +114,7 @@ def extraire_paragraphes(page_plumber, zones_exclues: list, entetes_pieds: set =
     top_para = None
     bottom_precedent = None
     style_precedent = None
+    x0_precedent = None
 
     def cloturer_paragraphe():
         if not para_segments:
@@ -96,9 +133,23 @@ def extraire_paragraphes(page_plumber, zones_exclues: list, entetes_pieds: set =
         hauteur_ligne = ligne["bottom"] - ligne["top"]
         style_ligne = classifier_style(detecter_style_ligne(ligne), taille_corps)
 
+        ecart = (ligne["top"] - bottom_precedent) if bottom_precedent is not None else 0
         rupture_espacement = (
             bottom_precedent is not None
-            and (ligne["top"] - bottom_precedent) > hauteur_ligne * RATIO_ESPACEMENT_NOUVEAU_PARAGRAPHE
+            and (
+                ecart > hauteur_ligne * RATIO_ESPACEMENT_NOUVEAU_PARAGRAPHE
+                or ecart > seuil_ecart
+            )
+        )
+        # Retrait : début de paragraphe si la ligne précédente finit une
+        # phrase et n'était pas elle-même en retrait (liste à retrait
+        # suspendu, citation : on ne coupe pas).
+        rupture_retrait = (
+            bool(para_segments)
+            and (ligne["x0"] - marge_gauche) > seuil_retrait
+            and x0_precedent is not None
+            and (x0_precedent - marge_gauche) <= seuil_retrait
+            and _finit_une_phrase(para_segments[-1][0])
         )
         # Rupture de style : isole un titre/sous-titre du texte normal qui
         # l'entoure, même sans grand espacement vertical.
@@ -107,7 +158,7 @@ def extraire_paragraphes(page_plumber, zones_exclues: list, entetes_pieds: set =
             and style_ligne != style_precedent
             and ("titre" in style_ligne or "titre" in style_precedent)
         )
-        nouveau_paragraphe = rupture_espacement or rupture_style
+        nouveau_paragraphe = rupture_espacement or rupture_retrait or rupture_style
 
         if nouveau_paragraphe:
             cloturer_paragraphe()
@@ -132,6 +183,7 @@ def extraire_paragraphes(page_plumber, zones_exclues: list, entetes_pieds: set =
             top_para = ligne["top"]
         bottom_precedent = ligne["bottom"]
         style_precedent = style_ligne
+        x0_precedent = ligne["x0"]
 
     cloturer_paragraphe()
 

@@ -92,3 +92,16 @@ LANGUES_SUPPORTEES = {
     "en": "Anglais", "fr": "Français", "es": "Espagnol",
     "pt": "Portugais", "de": "Allemand", "it": "Italien", "ar": "Arabe",
 }
+
+# --------------------------------------------------------------------------
+# Détection des débuts de paragraphe (retrait et écart relatif)
+# --------------------------------------------------------------------------
+
+# Retrait minimal (en fraction de la taille du corps de texte) pour qu'une
+# ligne soit considérée comme le début d'un nouveau paragraphe.
+SEUIL_RETRAIT_PARAGRAPHE = 0.6
+
+# Un écart vertical supérieur à RATIO x l'écart médian de la page ouvre un
+# nouveau paragraphe (avec un minimum absolu, en points).
+RATIO_ECART_NOUVEAU_PARAGRAPHE = 3.0
+ECART_MIN_NOUVEAU_PARAGRAPHE = 4.0
