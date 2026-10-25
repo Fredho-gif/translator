@@ -59,3 +59,18 @@ def test_retrait_suspendu_ne_coupe_pas():
         ligne(116.2, "sur la ligne suivante en retrait.", x0=90.7, x1=300),
     ])
     assert len(resultat) == 1
+
+def test_mot_coupe_en_fin_de_ligne_est_recolle():
+    resultat = textes([
+        ligne(100, "Le grand CERF-", x1=200),
+        ligne(116.2, "VOLANT du succes s'eleve.", x1=300),
+    ])
+    assert resultat == ["Le grand CERF-VOLANT du succes s'eleve."]
+
+
+def test_tiret_de_liste_n_est_pas_une_cesure():
+    resultat = textes([
+        ligne(100, "Deux methodes principales :", x1=200),
+        ligne(116.2, "- l'etude des faits.", x1=300),
+    ])
+    assert "\n" in resultat[0] or " - l'etude" in resultat[0]
